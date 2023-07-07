@@ -11,7 +11,7 @@ import (
 	"log"
 	"os"
 
-	bot_service "github.com/MinFengLin/xingshan/bot"
+	bot_service "github.com/MinFengLin/xingshan_tgbot/bot"
 	"github.com/joho/godotenv"
 	"github.com/robfig/cron/v3"
 )

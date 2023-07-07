@@ -1,0 +1,81 @@
+kind: pipeline
+type: docker
+name: golint_check
+
+steps:
+- name: golangci-lint
+  image: golangci/golangci-lint:v1.31.0-alpine
+  commands:
+    - golangci-lint run -v
+
+trigger:
+  branch:
+  - master
+
+node:
+  runner: 1
+
+---
+
+kind: pipeline
+type: docker
+name: build_armv7
+
+steps:
+- name: build
+  image: golang
+  volumes:
+  - name: go_dir
+    path: /go_dir
+  commands:
+  - useradd minfenglin
+  - GOOS=linux GOARCH=arm GOARM=7 go build -v cmd/main.go
+  - mv main /go_dir/xingshan/xingshan_armv7
+  - chown minfenglin:minfenglin /go_dir/xingshan/xingshan_armv7
+
+- name: notify_telegram
+  image: appleboy/drone-telegram
+  settings:
+    token:
+      from_secret: telegram_token
+    to:
+      from_secret: telegram_chatid
+    message: >
+      {{#success build.status}}
+      ✔ armv7 build PASS #{{build.number}} of `{{repo.name}}`.
+
+      📝 Commit by {{commit.author}} on `{{commit.branch}}`:
+
+      ```
+      {{commit.message}}
+      ```
+
+      🔗 {{ build.link }}
+      {{else}}
+      ❌ armv7 build FAIL #{{build.number}} of `{{repo.name}}`.
+
+      📝 Commit by {{commit.author}} on `{{commit.branch}}`:
+
+      ```
+      {{commit.message}}
+      ```
+
+      🔗 {{ build.link }}
+      {{/success}}
+  when:
+    status: [ success, failure ]
+
+volumes:
+- name: go_dir
+  host:
+    path: /Users/minfenglin/go_dir
+
+depends_on:
+- golint_check
+
+trigger:
+  branch:
+  - master
+
+node:
+  runner: 1

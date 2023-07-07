@@ -1,0 +1,5 @@
+.path
+.env
+go.mod
+go.sum
+xingshan*
